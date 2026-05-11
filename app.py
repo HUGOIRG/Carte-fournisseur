@@ -34,7 +34,6 @@ iframe {
     border: 2px solid #dbe2ea !important;
 }
 
-/* LOGO HEADER */
 .logo-container {
     text-align: center;
     margin-bottom: 10px;
@@ -117,6 +116,7 @@ for ent_name, group in df.groupby("entreprise"):
                 "contact": row.get("contact", ""),
                 "email": row.get("email", ""),
                 "tel": row.get("tel", ""),
+                "sharepoint": row.get("sharepoint", ""),
                 "deps": str(row.get("deps", "")).split(";")
                 if pd.notna(row.get("deps", "")) else []
             }
@@ -139,7 +139,8 @@ for ent in ENTREPRISES:
                 "adresse": imp.get("adresse", ""),
                 "contact": imp.get("contact", ""),
                 "tel": imp.get("tel", ""),
-                "email": imp.get("email", "")
+                "email": imp.get("email", ""),
+                "sharepoint": imp.get("sharepoint", "")
             })
 
 # ==========================================================
@@ -219,7 +220,8 @@ for _, r in gdf.iterrows():
             {d['adresse']}<br>
             👤 {d['contact']}<br>
             📞 {d['tel']}<br>
-            📧 {d['email']}<br><br>
+            📧 {d['email']}<br>
+            🔗 <a href="{d['sharepoint']}" target="_blank">Sharepoint</a><br><br>
             """
 
     else:
@@ -262,9 +264,14 @@ for ent in ENTREPRISES:
             popup=f"""
             <b style="color:{color};">{ent['nom']}</b><br>
             {imp.get('adresse','')}<br><br>
+
             👤 {imp.get('contact','')}<br>
             📧 {imp.get('email','')}<br>
-            📞 {imp.get('tel','')}
+            📞 {imp.get('tel','')}<br>
+
+            🔗 <a href="{imp.get('sharepoint','')}" target="_blank">
+            Sharepoint
+            </a>
             """
         ).add_to(fg)
 
@@ -329,4 +336,3 @@ with open("carte_fournisseurs.html", "rb") as f:
         "carte_fournisseurs.html",
         "text/html"
     )
-    
