@@ -34,7 +34,27 @@ iframe {
     border: 2px solid #dbe2ea !important;
 }
 
+/* LOGO HEADER */
+.logo-container {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.logo-container img {
+    width: 320px;
+    max-width: 80%;
+}
+
 </style>
+""", unsafe_allow_html=True)
+
+# ==========================================================
+# 🟢 LOGO IRISOLARIS (AJOUT ICI)
+# ==========================================================
+st.markdown("""
+<div class="logo-container">
+    <img src="https://irisolaris.com/uploads/2025/07/Home-hero.png">
+</div>
 """, unsafe_allow_html=True)
 
 # ==========================================================
@@ -87,7 +107,7 @@ for ent_name, group in df.groupby("entreprise"):
 
     ENTREPRISES.append({
         "nom": ent_name,
-        "statut_nego": group["statut"].iloc[0],  # numéro brut
+        "statut_nego": group["statut"].iloc[0],
         "implantations": [
             {
                 "lat": row["lat"],
@@ -97,8 +117,7 @@ for ent_name, group in df.groupby("entreprise"):
                 "email": row.get("email", ""),
                 "tel": row.get("tel", ""),
                 "deps": str(row.get("deps", "")).split(";")
-                if pd.notna(row.get("deps", ""))
-                else []
+                if pd.notna(row.get("deps", "")) else []
             }
             for _, row in group.iterrows()
         ]
@@ -222,7 +241,7 @@ for _, r in gdf.iterrows():
 fg_contours.add_to(m)
 
 # ==========================================================
-# IMPLANTATIONS (FILTRABLE PAR ENTREPRISE)
+# IMPLANTATIONS
 # ==========================================================
 for ent in ENTREPRISES:
 
@@ -309,3 +328,4 @@ with open("carte_fournisseurs.html", "rb") as f:
         "carte_fournisseurs.html",
         "text/html"
     )
+    
