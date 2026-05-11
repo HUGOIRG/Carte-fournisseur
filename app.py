@@ -49,11 +49,12 @@ iframe {
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# 🟢 LOGO IRISOLARIS (AJOUT ICI)
+# 🟢 LOGO IRISOLARIS
 # ==========================================================
 st.markdown("""
-<div class="logo-container">
-    <img src="https://www.bing.com/images/search?view=detailV2&ccid=Xxz43iiD&id=8D32F260087192037DF6F41668FF6FDC101C796F&thid=OIP.Xxz43iiD23vuxM49fc34wQHaHa&mediaurl=https%3a%2f%2fwww.hangar-agricole.fr%2fwp-content%2fuploads%2f2025%2f04%2firisolaris.png&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.5f1cf8de2883db7beec4ce3d7dcdf8c1%3frik%3db3kcENxv%252f2gW9A%26pid%3dImgRaw%26r%3d0&exph=500&expw=500&q=Irisolaris&FORM=IRPRST&ck=6DD33BDA86BB9D9F0AFF8EF4F8D5D227&selectedIndex=2&itb=1">
+<div style="text-align:center; margin-bottom:30px;">
+    <img src="https://raw.githubusercontent.com/HUGOIRG/carte-fournisseur/main/Logo_Support_Long.png"
+         width="350">
 </div>
 """, unsafe_allow_html=True)
 
