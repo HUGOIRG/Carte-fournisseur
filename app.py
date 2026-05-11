@@ -53,7 +53,7 @@ iframe {
 # ==========================================================
 st.markdown("""
 <div class="logo-container">
-    <img src="https://irisolaris.com/uploads/2025/07/Home-hero.png">
+    <img src="https://th.bing.com/th/id/OIP.FXwNybDGL1DArdGbYR-EFAHaIf?w=130&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3">
 </div>
 """, unsafe_allow_html=True)
 
