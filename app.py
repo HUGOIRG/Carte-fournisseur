@@ -34,6 +34,7 @@ iframe {
     border: 2px solid #dbe2ea !important;
 }
 
+/* LOGO HEADER */
 .logo-container {
     text-align: center;
     margin-bottom: 10px;
@@ -116,7 +117,7 @@ for ent_name, group in df.groupby("entreprise"):
                 "contact": row.get("contact", ""),
                 "email": row.get("email", ""),
                 "tel": row.get("tel", ""),
-                "sharepoint": row.get("sharepoint", ""),
+                "sharepoint": str(row.get("sharepoint", "")).strip(),
                 "deps": str(row.get("deps", "")).split(";")
                 if pd.notna(row.get("deps", "")) else []
             }
@@ -139,8 +140,7 @@ for ent in ENTREPRISES:
                 "adresse": imp.get("adresse", ""),
                 "contact": imp.get("contact", ""),
                 "tel": imp.get("tel", ""),
-                "email": imp.get("email", ""),
-                "sharepoint": imp.get("sharepoint", "")
+                "email": imp.get("email", "")
             })
 
 # ==========================================================
@@ -220,8 +220,7 @@ for _, r in gdf.iterrows():
             {d['adresse']}<br>
             👤 {d['contact']}<br>
             📞 {d['tel']}<br>
-            📧 {d['email']}<br>
-            🔗 <a href="{d['sharepoint']}" target="_blank">Sharepoint</a><br><br>
+            📧 {d['email']}<br><br>
             """
 
     else:
@@ -257,22 +256,44 @@ for ent in ENTREPRISES:
 
     for imp in ent["implantations"]:
 
+        popup_html = f"""
+        <b style="color:{color};">
+            {ent['nom']}
+        </b><br>
+
+        {imp.get('adresse','')}<br><br>
+
+        👤 {imp.get('contact','')}<br>
+
+        📧 <a href="mailto:{imp.get('email','')}">
+            {imp.get('email','')}
+        </a><br>
+
+        📞 {imp.get('tel','')}<br>
+        """
+
+        # ==========================================================
+        # AJOUT SHAREPOINT SI EXISTE
+        # ==========================================================
+        sharepoint_link = imp.get("sharepoint", "")
+
+        if (
+            sharepoint_link
+            and str(sharepoint_link).strip() != ""
+            and str(sharepoint_link).startswith("http")
+        ):
+            popup_html += f"""
+            <br>
+            🔗 <a href="{sharepoint_link}" target="_blank">
+                Ouvrir Sharepoint
+            </a>
+            """
+
         folium.Marker(
             location=[imp["lat"], imp["lon"]],
             tooltip=ent["nom"],
             icon=folium.Icon(color=color),
-            popup=f"""
-            <b style="color:{color};">{ent['nom']}</b><br>
-            {imp.get('adresse','')}<br><br>
-
-            👤 {imp.get('contact','')}<br>
-            📧 {imp.get('email','')}<br>
-            📞 {imp.get('tel','')}<br>
-
-            🔗 <a href="{imp.get('sharepoint','')}" target="_blank">
-            Sharepoint
-            </a>
-            """
+            popup=folium.Popup(popup_html, max_width=350)
         ).add_to(fg)
 
     fg.add_to(m)
