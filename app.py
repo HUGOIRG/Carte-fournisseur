@@ -53,7 +53,7 @@ iframe {
 # ==========================================================
 st.markdown("""
 <div class="logo-container">
-    <img src="https://th.bing.com/th/id/OIP.FXwNybDGL1DArdGbYR-EFAHaIf?w=130&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3">
+    <img src="https://www.bing.com/images/search?view=detailV2&ccid=npibC1Np&id=520172A6B498CBC4ECE46F5AFD767099ED0831B2&thid=OIP.npibC1NpyzXXUjUiY_0TzQAAAA&mediaurl=https%3a%2f%2fstatic.wixstatic.com%2fmedia%2fae40a5_6e4ea3bf61a6483fb68c686b1e74bac4%7emv2.png%2fv1%2ffill%2fw_336%2ch_57%2cal_c%2cusm_0.66_1.00_0.01%2fLOGO_ENTREPRISE_CORPO-01.png&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.9e989b0b5369cb35d752352263fd13cd%3frik%3dsjEI7Zlwdv1abw%26pid%3dImgRaw%26r%3d0&exph=57&expw=336&q=irisolaris+logo&FORM=IRPRST&ck=87FBB8EF84D3D8EAB8CA1E3769039FF3&selectedIndex=3&itb=1">
 </div>
 """, unsafe_allow_html=True)
 
