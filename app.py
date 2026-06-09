@@ -34,7 +34,6 @@ iframe {
     border: 2px solid #dbe2ea !important;
 }
 
-/* LOGO HEADER */
 .logo-container {
     text-align: center;
     margin-bottom: 10px;
@@ -49,7 +48,7 @@ iframe {
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# 🟢 LOGO IRISOLARIS
+# LOGO
 # ==========================================================
 st.markdown("""
 <div style="text-align:center; margin-bottom:30px;">
@@ -77,6 +76,9 @@ if file is None:
 
 df = pd.read_excel(file, engine="openpyxl")
 
+# NORMALISATION COLONNES (IMPORTANT)
+df.columns = df.columns.str.strip().str.lower()
+
 # ==========================================================
 # GEOJSON FRANCE
 # ==========================================================
@@ -84,7 +86,7 @@ url = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
 gdf = gpd.read_file(url)
 
 # ==========================================================
-# COULEURS PAR STATUT NUMERIQUE
+# COULEURS
 # ==========================================================
 COLOR_PALETTE = [
     "darkred", "blue", "green", "purple", "orange",
@@ -117,6 +119,7 @@ for ent_name, group in df.groupby("entreprise"):
                 "contact": row.get("contact", ""),
                 "email": row.get("email", ""),
                 "tel": row.get("tel", ""),
+                "capacité": row.get("capacité", ""),
                 "sharepoint": str(row.get("sharepoint", "")).strip(),
                 "deps": str(row.get("deps", "")).split(";")
                 if pd.notna(row.get("deps", "")) else []
@@ -140,7 +143,8 @@ for ent in ENTREPRISES:
                 "adresse": imp.get("adresse", ""),
                 "contact": imp.get("contact", ""),
                 "tel": imp.get("tel", ""),
-                "email": imp.get("email", "")
+                "email": imp.get("email", ""),
+                "capacité": imp.get("capacité", "")
             })
 
 # ==========================================================
@@ -159,9 +163,6 @@ with col3:
 
 st.divider()
 
-# ==========================================================
-# DATAFRAME
-# ==========================================================
 with st.expander("📄 Données Excel"):
     st.dataframe(df, use_container_width=True)
 
@@ -199,7 +200,7 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================================
-# CONTOURS DEPARTEMENTS + POPUP
+# DEPARTEMENTS + POPUP
 # ==========================================================
 fg_contours = folium.FeatureGroup(name="🗺️ Départements", show=True)
 
@@ -218,6 +219,7 @@ for _, r in gdf.iterrows():
             html += f"""
             <b>{d['entreprise']}</b><br>
             {d['adresse']}<br>
+            🏭 {d['capacité']}<br>
             👤 {d['contact']}<br>
             📞 {d['tel']}<br>
             📧 {d['email']}<br><br>
@@ -257,31 +259,21 @@ for ent in ENTREPRISES:
     for imp in ent["implantations"]:
 
         popup_html = f"""
-        <b style="color:{color};">
-            {ent['nom']}
-        </b><br>
-
+        <b style="color:{color};">{ent['nom']}</b><br>
         {imp.get('adresse','')}<br><br>
+
+        🏭 <b>Capacité :</b> {imp.get('capacité','')}<br>
 
         👤 {imp.get('contact','')}<br>
 
-        📧 <a href="mailto:{imp.get('email','')}">
-            {imp.get('email','')}
-        </a><br>
+        📧 <a href="mailto:{imp.get('email','')}">{imp.get('email','')}</a><br>
 
         📞 {imp.get('tel','')}<br>
         """
 
-        # ==========================================================
-        # AJOUT SHAREPOINT SI EXISTE
-        # ==========================================================
         sharepoint_link = imp.get("sharepoint", "")
 
-        if (
-            sharepoint_link
-            and str(sharepoint_link).strip() != ""
-            and str(sharepoint_link).startswith("http")
-        ):
+        if sharepoint_link and str(sharepoint_link).startswith("http"):
             popup_html += f"""
             <br>
             🔗 <a href="{sharepoint_link}" target="_blank">
