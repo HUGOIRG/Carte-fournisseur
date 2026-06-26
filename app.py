@@ -169,7 +169,13 @@ with st.expander("📄 Données Excel"):
 # ==========================================================
 # HEATMAP
 # ==========================================================
+dep_count = {
+    dep: len(set([x["entreprise"] for x in items]))
+    for dep, items in dep_data.items()
+}
+
 max_count = max(dep_count.values()) if dep_count else 1
+
 
 def heat_color(n):
     if n == 0:
@@ -190,7 +196,6 @@ def heat_color(n):
     else:
         return "#d62828"      # rouge
 
-dep_count = { dep: len(set([x["entreprise"] for x in items])) for dep, items in dep_data.items() }
 
 # ==========================================================
 # MAP
