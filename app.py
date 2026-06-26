@@ -200,6 +200,7 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================================
+# ==========================================================
 # DEPARTEMENTS + POPUP
 # ==========================================================
 fg_contours = folium.FeatureGroup(name="🗺️ Départements", show=True)
@@ -212,21 +213,39 @@ for _, r in gdf.iterrows():
 
         data = dep_data[code]
 
-        html = f"<h4>Département {code}</h4>"
-        html += f"<b>{len(data)} implantation(s)</b><br><br>"
+        html = f"""
+        <h4>Département {code}</h4>
+        <b>{len(data)} implantation(s)</b><br><br>
+
+        <div style="
+            max-height:400px;
+            width:100%;
+            overflow-y:auto;
+            overflow-x:hidden;
+            padding-right:8px;
+        ">
+        """
 
         for d in data:
             html += f"""
-            <b>{d['entreprise']}</b><br>
-            {d['adresse']}<br>
-            🏭 {d['capacité']}<br>
-            👤 {d['contact']}<br>
-            📞 {d['tel']}<br>
-            📧 {d['email']}<br><br>
+            <div style="margin-bottom:15px;">
+                <b>{d['entreprise']}</b><br>
+                {d['adresse']}<br>
+                🏭 {d['capacité']}<br>
+                👤 {d['contact']}<br>
+                📞 {d['tel']}<br>
+                📧 {d['email']}
+            </div>
             """
 
+        html += "</div>"
+
     else:
-        html = f"<h4>Département {code}</h4>Aucune implantation"
+
+        html = f"""
+        <h4>Département {code}</h4>
+        Aucune implantation
+        """
 
     fill = heat_color(dep_count.get(code, 0))
 
@@ -239,7 +258,10 @@ for _, r in gdf.iterrows():
             "fillOpacity": 0.2
         },
         tooltip=f"Département {code}",
-        popup=folium.Popup(html, max_width=450)
+        popup=folium.Popup(
+            html,
+            max_width=450
+        )
     ).add_to(fg_contours)
 
 fg_contours.add_to(m)
