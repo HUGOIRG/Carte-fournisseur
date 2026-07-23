@@ -86,7 +86,6 @@ df.columns = df.columns.str.strip().str.lower()
 url = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
 gdf = gpd.read_file(url)
 
-# Union de tous les départements pour obtenir le contour global France
 france_outline = gpd.GeoDataFrame(
     geometry=[unary_union(gdf.geometry)],
     crs=gdf.crs
@@ -212,6 +211,40 @@ folium.TileLayer(
     name="Google Maps"
 ).add_to(m)
 
+# Pane spécifique pour mettre le contour France derrière
+folium.map.CustomPane("france_back", z_index=350).add_to(m)
+
+# ==========================================================
+# CONTOUR FRANCE EN ARRIERE-PLAN
+# ==========================================================
+fg_france = folium.FeatureGroup(name="🇫🇷 Contour France", show=True)
+
+folium.GeoJson(
+    france_outline,
+    pane="france_back",
+    interactive=False,
+    style_function=lambda x: {
+        "fillOpacity": 0,
+        "color": "white",
+        "weight": 5,
+        "opacity": 0.95
+    }
+).add_to(fg_france)
+
+folium.GeoJson(
+    france_outline,
+    pane="france_back",
+    interactive=False,
+    style_function=lambda x: {
+        "fillOpacity": 0,
+        "color": "#08306b",
+        "weight": 1,
+        "opacity": 1
+    }
+).add_to(fg_france)
+
+fg_france.add_to(m)
+
 # ==========================================================
 # DEPARTEMENTS + POPUP
 # ==========================================================
@@ -277,36 +310,6 @@ for _, r in gdf.iterrows():
     ).add_to(fg_contours)
 
 fg_contours.add_to(m)
-
-# ==========================================================
-# CONTOUR FRANCE RENFORCE
-# ==========================================================
-fg_france = folium.FeatureGroup(name="🇫🇷 Contour France", show=True)
-
-# Halo blanc pour détacher la France du fond et des pays voisins
-folium.GeoJson(
-    france_outline,
-    style_function=lambda x: {
-        "fillOpacity": 0,
-        "color": "white",
-        "weight": 5,
-        "opacity": 0.95
-    }
-).add_to(fg_france)
-
-# Contour principal bleu foncé
-folium.GeoJson(
-    france_outline,
-    style_function=lambda x: {
-        "fillOpacity": 0,
-        "color": "#08306b",
-        "weight": 1,
-        "opacity": 1
-    },
-    tooltip="France"
-).add_to(fg_france)
-
-fg_france.add_to(m)
 
 # ==========================================================
 # NUMEROS DES DEPARTEMENTS
