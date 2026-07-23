@@ -398,7 +398,25 @@ for ent in ENTREPRISES:
 # CONTROL LAYERS
 # ==========================================================
 folium.LayerControl(collapsed=False).add_to(m)
+# ==========================================================
+# CONTOUR EPAIS DE LA FRANCE
+# ==========================================================
+from shapely.ops import unary_union
 
+# Fusion de tous les départements
+france = unary_union(gdf.geometry)
+
+# Dessin du contour national
+folium.GeoJson(
+    france,
+    name="Contour France",
+    style_function=lambda x: {
+        "color": "black",
+        "weight": 6,      # épaisseur du contour
+        "fillOpacity": 0,
+        "opacity": 1
+    }
+).add_to(m)
 # ==========================================================
 # DISPLAY
 # ==========================================================
