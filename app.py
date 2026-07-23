@@ -238,7 +238,7 @@ folium.GeoJson(
     style_function=lambda x: {
         "fillOpacity": 0,
         "color": "#08306b",
-        "weight": 1,
+        "weight": 2,
         "opacity": 1
     }
 ).add_to(fg_france)
