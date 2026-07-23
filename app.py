@@ -274,7 +274,43 @@ for _, r in gdf.iterrows():
     ).add_to(fg_contours)
 
 fg_contours.add_to(m)
+# ==========================================================
+# NUMEROS DES DEPARTEMENTS
+# ==========================================================
+fg_labels = folium.FeatureGroup(
+    name="🔢 Numéros des départements",
+    show=True
+)
 
+for _, r in gdf.iterrows():
+
+    code = r["code"]
+
+    # centre du département
+    centroid = r["geometry"].centroid
+
+    folium.Marker(
+        location=[centroid.y, centroid.x],
+        icon=folium.DivIcon(
+            html=f"""
+            <div style="
+                font-size:10px;
+                font-weight:bold;
+                color:black;
+                text-align:center;
+                text-shadow:
+                    -1px -1px 0 white,
+                     1px -1px 0 white,
+                    -1px  1px 0 white,
+                     1px  1px 0 white;
+            ">
+                {code}
+            </div>
+            """
+        )
+    ).add_to(fg_labels)
+
+fg_labels.add_to(m)
 # ==========================================================
 # IMPLANTATIONS
 # ==========================================================
