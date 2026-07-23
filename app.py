@@ -300,7 +300,7 @@ folium.GeoJson(
     style_function=lambda x: {
         "fillOpacity": 0,
         "color": "#08306b",
-        "weight": 2,
+        "weight": 1,
         "opacity": 1
     },
     tooltip="France"
