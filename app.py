@@ -4,6 +4,7 @@ import folium
 import geopandas as gpd
 from collections import defaultdict
 from streamlit_folium import st_folium
+from shapely.ops import unary_union
 
 # ==========================================================
 # CONFIG PAGE
@@ -76,7 +77,7 @@ if file is None:
 
 df = pd.read_excel(file, engine="openpyxl")
 
-# NORMALISATION COLONNES (IMPORTANT)
+# NORMALISATION COLONNES
 df.columns = df.columns.str.strip().str.lower()
 
 # ==========================================================
@@ -84,6 +85,12 @@ df.columns = df.columns.str.strip().str.lower()
 # ==========================================================
 url = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
 gdf = gpd.read_file(url)
+
+# Union de tous les départements pour obtenir le contour global France
+france_outline = gpd.GeoDataFrame(
+    geometry=[unary_union(gdf.geometry)],
+    crs=gdf.crs
+)
 
 # ==========================================================
 # COULEURS
@@ -107,7 +114,6 @@ def get_color(statut):
 ENTREPRISES = []
 
 for ent_name, group in df.groupby("entreprise"):
-
     ENTREPRISES.append({
         "nom": ent_name,
         "statut_nego": group["statut"].iloc[0],
@@ -176,7 +182,6 @@ dep_count = {
 
 max_count = max(dep_count.values()) if dep_count else 1
 
-
 def heat_color(n):
     if n == 0:
         return "#f0f0f0"
@@ -184,18 +189,17 @@ def heat_color(n):
     ratio = n / max_count
 
     if ratio < 0.2:
-        return "#d4f0ff"      # bleu très clair
+        return "#d4f0ff"
     elif ratio < 0.4:
-        return "#7fc8f8"      # bleu
+        return "#7fc8f8"
     elif ratio < 0.6:
-        return "#7fd37f"      # vert
+        return "#7fd37f"
     elif ratio < 0.8:
-        return "#ffd966"      # jaune
+        return "#ffd966"
     elif ratio < 0.95:
-        return "#f4a261"      # orange
+        return "#f4a261"
     else:
-        return "#d62828"      # rouge
-
+        return "#d62828"
 
 # ==========================================================
 # MAP
@@ -209,17 +213,14 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================================
-# ==========================================================
 # DEPARTEMENTS + POPUP
 # ==========================================================
 fg_contours = folium.FeatureGroup(name="🗺️ Départements", show=True)
 
 for _, r in gdf.iterrows():
-
     code = r["code"]
 
     if code in dep_data:
-
         data = dep_data[code]
 
         html = f"""
@@ -250,7 +251,6 @@ for _, r in gdf.iterrows():
         html += "</div>"
 
     else:
-
         html = f"""
         <h4>Département {code}</h4>
         Aucune implantation
@@ -262,18 +262,52 @@ for _, r in gdf.iterrows():
         r["geometry"],
         style_function=lambda x, fill=fill: {
             "fillColor": fill,
-            "color": "black",
-            "weight": 0.7,
-            "fillOpacity": 0.2
+            "color": "#444444",
+            "weight": 1,
+            "opacity": 0.6,
+            "fillOpacity": 0.22
+        },
+        highlight_function=lambda x: {
+            "fillOpacity": 0.35,
+            "weight": 2,
+            "color": "#1f3b73"
         },
         tooltip=f"Département {code}",
-        popup=folium.Popup(
-            html,
-            max_width=450
-        )
+        popup=folium.Popup(html, max_width=450)
     ).add_to(fg_contours)
 
 fg_contours.add_to(m)
+
+# ==========================================================
+# CONTOUR FRANCE RENFORCE
+# ==========================================================
+fg_france = folium.FeatureGroup(name="🇫🇷 Contour France", show=True)
+
+# Halo blanc pour détacher la France du fond et des pays voisins
+folium.GeoJson(
+    france_outline,
+    style_function=lambda x: {
+        "fillOpacity": 0,
+        "color": "white",
+        "weight": 7,
+        "opacity": 0.95
+    }
+).add_to(fg_france)
+
+# Contour principal bleu foncé
+folium.GeoJson(
+    france_outline,
+    style_function=lambda x: {
+        "fillOpacity": 0,
+        "color": "#08306b",
+        "weight": 4,
+        "opacity": 1
+    },
+    tooltip="France"
+).add_to(fg_france)
+
+fg_france.add_to(m)
+
 # ==========================================================
 # NUMEROS DES DEPARTEMENTS
 # ==========================================================
@@ -283,10 +317,7 @@ fg_labels = folium.FeatureGroup(
 )
 
 for _, r in gdf.iterrows():
-
     code = r["code"]
-
-    # centre du département
     centroid = r["geometry"].centroid
 
     folium.Marker(
@@ -311,11 +342,11 @@ for _, r in gdf.iterrows():
     ).add_to(fg_labels)
 
 fg_labels.add_to(m)
+
 # ==========================================================
 # IMPLANTATIONS
 # ==========================================================
 for ent in ENTREPRISES:
-
     color = get_color(ent["statut_nego"])
 
     fg = folium.FeatureGroup(
@@ -324,7 +355,6 @@ for ent in ENTREPRISES:
     )
 
     for imp in ent["implantations"]:
-
         popup_html = f"""
         <b style="color:{color};">{ent['nom']}</b><br>
         {imp.get('adresse','')}<br><br>
@@ -343,9 +373,7 @@ for ent in ENTREPRISES:
         if sharepoint_link and str(sharepoint_link).startswith("http"):
             popup_html += f"""
             <br>
-            🔗 <a href="{sharepoint_link}" target="_blank">
-                Ouvrir Sharepoint
-            </a>
+            🔗 <a href="{sharepoint_link}" target="_blank">Ouvrir Sharepoint</a>
             """
 
         folium.Marker(
@@ -361,7 +389,6 @@ for ent in ENTREPRISES:
 # DEPARTEMENTS PAR ENTREPRISE
 # ==========================================================
 for ent in ENTREPRISES:
-
     fg_dep = folium.FeatureGroup(
         name=f"🟦 {ent['nom']} - Départements",
         show=False
@@ -374,11 +401,9 @@ for ent in ENTREPRISES:
             deps_ent.add(dep.strip())
 
     for _, r in gdf.iterrows():
-
         code = r["code"]
 
         if code in deps_ent:
-
             color = get_color(ent["statut_nego"])
 
             folium.GeoJson(
@@ -387,6 +412,7 @@ for ent in ENTREPRISES:
                     "fillColor": color,
                     "color": color,
                     "weight": 2,
+                    "opacity": 0.9,
                     "fillOpacity": 0.4
                 },
                 tooltip=f"{ent['nom']} • {code}"
@@ -416,4 +442,3 @@ with open("carte_fournisseurs.html", "rb") as f:
         "carte_fournisseurs.html",
         "text/html"
     )
-
