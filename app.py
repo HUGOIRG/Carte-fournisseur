@@ -9,6 +9,7 @@ from shapely.ops import unary_union
 # ==========================================================
 # CONFIG PAGE
 # ==========================================================
+
 st.set_page_config(
     page_title="Cartographie fournisseurs",
     layout="wide"
@@ -17,6 +18,7 @@ st.set_page_config(
 # ==========================================================
 # STYLE CSS
 # ==========================================================
+
 st.markdown("""
 <style>
 
@@ -51,6 +53,7 @@ iframe {
 # ==========================================================
 # LOGO
 # ==========================================================
+
 st.markdown("""
 <div style="text-align:center; margin-bottom:30px;">
     <img src="https://raw.githubusercontent.com/HUGOIRG/carte-fournisseur/main/Logo_Support_Long.png"
@@ -61,6 +64,7 @@ st.markdown("""
 # ==========================================================
 # TITRE
 # ==========================================================
+
 st.markdown("""
 # 📍 Cartographie fournisseurs
 ### Visualisation des implantations & départements
@@ -69,6 +73,7 @@ st.markdown("""
 # ==========================================================
 # UPLOAD EXCEL
 # ==========================================================
+
 file = st.file_uploader("📂 Import Excel", type=["xlsx"])
 
 if file is None:
@@ -83,8 +88,13 @@ df.columns = df.columns.str.strip().str.lower()
 # ==========================================================
 # GEOJSON FRANCE
 # ==========================================================
+
 url = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
+
 gdf = gpd.read_file(url)
+
+# Sécurisation des codes départements
+gdf["code"] = gdf["code"].astype(str).str.zfill(2)
 
 france_outline = gpd.GeoDataFrame(
     geometry=[unary_union(gdf.geometry)],
@@ -92,31 +102,100 @@ france_outline = gpd.GeoDataFrame(
 )
 
 # ==========================================================
-# COULEURS
+# AGENCES IRISOLARIS
 # ==========================================================
+
+AGENCES = {
+
+    "COURNON": [
+        "03", "15", "19", "23", "42",
+        "43", "63", "69", "87"
+    ],
+
+    "MONTAUBAN": [
+        "09", "11", "12", "24", "30",
+        "31", "32", "33", "34", "40",
+        "46", "47", "48", "64", "65",
+        "66", "81", "82"
+    ],
+
+    "POITIERS": [
+        "14", "16", "17", "18", "22",
+        "28", "29", "35", "36", "37",
+        "41", "44", "45", "49", "50",
+        "53", "56", "61", "72", "79",
+        "85", "86"
+    ],
+
+    "RULLY": [
+        "01", "08", "10", "21", "25",
+        "39", "51", "52", "54", "55",
+        "57", "58", "67", "68", "70",
+        "71", "88", "89", "90"
+    ],
+
+    "VALENCE": [
+        "04", "05", "06", "07", "13",
+        "26", "38", "83", "84"
+    ]
+}
+
+# Couleurs des contours des agences
+AGENCE_COLORS = {
+    "COURNON": "#8B0000",
+    "MONTAUBAN": "#006400",
+    "POITIERS": "#00008B",
+    "RULLY": "#800080",
+    "VALENCE": "#FF8C00"
+}
+
+# ==========================================================
+# COULEURS FOURNISSEURS
+# ==========================================================
+
 COLOR_PALETTE = [
-    "darkred", "blue", "green", "purple", "orange",
-    "cadetblue", "darkgreen", "darkpurple", "pink", "lightblue",
-    "gray", "black", "beige"
+    "darkred",
+    "blue",
+    "green",
+    "purple",
+    "orange",
+    "cadetblue",
+    "darkgreen",
+    "darkpurple",
+    "pink",
+    "lightblue",
+    "gray",
+    "black",
+    "beige"
 ]
+
 
 def get_color(statut):
     try:
         statut_int = int(statut)
-        return COLOR_PALETTE[(statut_int - 1) % len(COLOR_PALETTE)]
+        return COLOR_PALETTE[
+            (statut_int - 1) % len(COLOR_PALETTE)
+        ]
     except:
         return "gray"
+
 
 # ==========================================================
 # RECONSTRUCTION ENTREPRISES
 # ==========================================================
+
 ENTREPRISES = []
 
 for ent_name, group in df.groupby("entreprise"):
+
     ENTREPRISES.append({
+
         "nom": ent_name,
+
         "statut_nego": group["statut"].iloc[0],
+
         "implantations": [
+
             {
                 "lat": row["lat"],
                 "lon": row["lon"],
@@ -125,25 +204,38 @@ for ent_name, group in df.groupby("entreprise"):
                 "email": row.get("email", ""),
                 "tel": row.get("tel", ""),
                 "capacité": row.get("capacité", ""),
-                "sharepoint": str(row.get("sharepoint", "")).strip(),
-                "deps": str(row.get("deps", "")).split(";")
-                if pd.notna(row.get("deps", "")) else []
+                "sharepoint": str(
+                    row.get("sharepoint", "")
+                ).strip(),
+
+                "deps": str(
+                    row.get("deps", "")
+                ).split(";")
+                if pd.notna(row.get("deps", ""))
+                else []
             }
+
             for _, row in group.iterrows()
         ]
     })
 
+
 # ==========================================================
 # DATA DEPARTEMENTS
 # ==========================================================
+
 dep_data = defaultdict(list)
 
 for ent in ENTREPRISES:
+
     for imp in ent["implantations"]:
+
         for dep in imp.get("deps", []):
-            dep = dep.strip()
+
+            dep = dep.strip().zfill(2)
 
             dep_data[dep].append({
+
                 "entreprise": ent["nom"],
                 "adresse": imp.get("adresse", ""),
                 "contact": imp.get("contact", ""),
@@ -152,36 +244,67 @@ for ent in ENTREPRISES:
                 "capacité": imp.get("capacité", "")
             })
 
+
 # ==========================================================
 # METRICS
 # ==========================================================
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("🏢 Entreprises", len(ENTREPRISES))
+    st.metric(
+        "🏢 Entreprises",
+        len(ENTREPRISES)
+    )
 
 with col2:
-    st.metric("📍 Implantations", len(df))
+    st.metric(
+        "📍 Implantations",
+        len(df)
+    )
 
 with col3:
-    st.metric("🗺️ Départements", len(dep_data))
+    st.metric(
+        "🗺️ Départements",
+        len(dep_data)
+    )
 
 st.divider()
 
 with st.expander("📄 Données Excel"):
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(
+        df,
+        use_container_width=True
+    )
+
 
 # ==========================================================
 # HEATMAP
 # ==========================================================
+
 dep_count = {
-    dep: len(set([x["entreprise"] for x in items]))
+
+    dep: len(
+        set(
+            [
+                x["entreprise"]
+                for x in items
+            ]
+        )
+    )
+
     for dep, items in dep_data.items()
 }
 
-max_count = max(dep_count.values()) if dep_count else 1
+max_count = (
+    max(dep_count.values())
+    if dep_count
+    else 1
+)
+
 
 def heat_color(n):
+
     if n == 0:
         return "#f0f0f0"
 
@@ -189,21 +312,32 @@ def heat_color(n):
 
     if ratio < 0.2:
         return "#d4f0ff"
+
     elif ratio < 0.4:
         return "#7fc8f8"
+
     elif ratio < 0.6:
         return "#7fd37f"
+
     elif ratio < 0.8:
         return "#ffd966"
+
     elif ratio < 0.95:
         return "#f4a261"
+
     else:
         return "#d62828"
+
 
 # ==========================================================
 # MAP
 # ==========================================================
-m = folium.Map(location=[46.7, 2.5], zoom_start=6, tiles=None)
+
+m = folium.Map(
+    location=[46.7, 2.5],
+    zoom_start=6,
+    tiles=None
+)
 
 folium.TileLayer(
     tiles="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
@@ -211,54 +345,189 @@ folium.TileLayer(
     name="Google Maps"
 ).add_to(m)
 
-# Pane spécifique pour mettre le contour France derrière
-folium.map.CustomPane("france_back", z_index=350).add_to(m)
+
+# ==========================================================
+# PANES
+# ==========================================================
+#
+# Leaflet utilise normalement :
+#
+# Tuiles Google       -> ~200
+# Custom panes        -> selon z_index
+# overlayPane         -> ~400
+# markersPane         -> ~600
+#
+# On place les contours des agences à 300 :
+# ils sont donc derrière les départements et les marqueurs.
+#
+# De plus, interactive=False garantit que les contours
+# ne capturent aucun clic.
+# ==========================================================
+
+folium.map.CustomPane(
+    "agences_back",
+    z_index=300
+).add_to(m)
+
+folium.map.CustomPane(
+    "france_back",
+    z_index=350
+).add_to(m)
+
+
+# ==========================================================
+# CONTOURS DES AGENCES
+# ==========================================================
+
+fg_agences = folium.FeatureGroup(
+    name="🏢 Contours des agences",
+    show=True
+)
+
+for agence, departements in AGENCES.items():
+
+    # Sélection des départements de l'agence
+    agence_gdf = gdf[
+        gdf["code"].isin(departements)
+    ]
+
+    if agence_gdf.empty:
+        continue
+
+    # Fusion géométrique des départements
+    agence_geometry = unary_union(
+        agence_gdf.geometry
+    )
+
+    couleur = AGENCE_COLORS.get(
+        agence,
+        "#000000"
+    )
+
+    # ------------------------------------------------------
+    # HALO BLANC
+    # ------------------------------------------------------
+    #
+    # Permet de bien distinguer le contour de la carte.
+    #
+
+    folium.GeoJson(
+
+        agence_geometry,
+
+        pane="agences_back",
+
+        interactive=False,
+
+        style_function=lambda x: {
+            "fillOpacity": 0,
+            "color": "white",
+            "weight": 9,
+            "opacity": 1
+        }
+
+    ).add_to(fg_agences)
+
+    # ------------------------------------------------------
+    # CONTOUR COLORE
+    # ------------------------------------------------------
+
+    folium.GeoJson(
+
+        agence_geometry,
+
+        pane="agences_back",
+
+        interactive=False,
+
+        style_function=lambda x, couleur=couleur: {
+            "fillOpacity": 0,
+            "color": couleur,
+            "weight": 5,
+            "opacity": 1
+        }
+
+    ).add_to(fg_agences)
+
+
+fg_agences.add_to(m)
+
 
 # ==========================================================
 # CONTOUR FRANCE EN ARRIERE-PLAN
 # ==========================================================
-fg_france = folium.FeatureGroup(name="🇫🇷 Contour France", show=True)
+
+fg_france = folium.FeatureGroup(
+    name="🇫🇷 Contour France",
+    show=True
+)
+
+# Halo blanc
 
 folium.GeoJson(
+
     france_outline,
+
     pane="france_back",
+
     interactive=False,
+
     style_function=lambda x: {
+
         "fillOpacity": 0,
         "color": "white",
         "weight": 5,
         "opacity": 0.95
     }
+
 ).add_to(fg_france)
 
+# Contour bleu
+
 folium.GeoJson(
+
     france_outline,
+
     pane="france_back",
+
     interactive=False,
+
     style_function=lambda x: {
+
         "fillOpacity": 0,
         "color": "#08306b",
         "weight": 2,
         "opacity": 1
     }
+
 ).add_to(fg_france)
 
 fg_france.add_to(m)
 
+
 # ==========================================================
 # DEPARTEMENTS + POPUP
 # ==========================================================
-fg_contours = folium.FeatureGroup(name="🗺️ Départements", show=True)
+
+fg_contours = folium.FeatureGroup(
+    name="🗺️ Départements",
+    show=True
+)
 
 for _, r in gdf.iterrows():
+
     code = r["code"]
 
     if code in dep_data:
+
         data = dep_data[code]
 
         html = f"""
         <h4>Département {code}</h4>
-        <b>{len(data)} implantation(s)</b><br><br>
+
+        <b>{len(data)} implantation(s)</b>
+
+        <br><br>
 
         <div style="
             max-height:400px;
@@ -270,62 +539,100 @@ for _, r in gdf.iterrows():
         """
 
         for d in data:
+
             html += f"""
+
             <div style="margin-bottom:15px;">
+
                 <b>{d['entreprise']}</b><br>
+
                 {d['adresse']}<br>
+
                 🏭 {d['capacité']}<br>
+
                 👤 {d['contact']}<br>
+
                 📞 {d['tel']}<br>
+
                 📧 {d['email']}
+
             </div>
+
             """
 
         html += "</div>"
 
     else:
+
         html = f"""
         <h4>Département {code}</h4>
         Aucune implantation
         """
 
-    fill = heat_color(dep_count.get(code, 0))
+    fill = heat_color(
+        dep_count.get(code, 0)
+    )
 
     folium.GeoJson(
+
         r["geometry"],
+
+        # Pas de pane spécifique :
+        # le département reste au-dessus des agences.
+
         style_function=lambda x, fill=fill: {
+
             "fillColor": fill,
             "color": "#444444",
             "weight": 1,
             "opacity": 0.6,
             "fillOpacity": 0.22
         },
+
         highlight_function=lambda x: {
+
             "fillOpacity": 0.35,
             "weight": 2,
             "color": "#1f3b73"
         },
+
         tooltip=f"Département {code}",
-        popup=folium.Popup(html, max_width=450)
+
+        popup=folium.Popup(
+            html,
+            max_width=450
+        )
+
     ).add_to(fg_contours)
 
+
 fg_contours.add_to(m)
+
 
 # ==========================================================
 # NUMEROS DES DEPARTEMENTS
 # ==========================================================
+
 fg_labels = folium.FeatureGroup(
     name="🔢 Numéros des départements",
     show=True
 )
 
 for _, r in gdf.iterrows():
+
     code = r["code"]
+
     centroid = r["geometry"].centroid
 
     folium.Marker(
-        location=[centroid.y, centroid.x],
+
+        location=[
+            centroid.y,
+            centroid.x
+        ],
+
         icon=folium.DivIcon(
+
             html=f"""
             <div style="
                 font-size:10px;
@@ -341,16 +648,24 @@ for _, r in gdf.iterrows():
                 {code}
             </div>
             """
+
         )
+
     ).add_to(fg_labels)
 
+
 fg_labels.add_to(m)
+
 
 # ==========================================================
 # IMPLANTATIONS
 # ==========================================================
+
 for ent in ENTREPRISES:
-    color = get_color(ent["statut_nego"])
+
+    color = get_color(
+        ent["statut_nego"]
+    )
 
     fg = folium.FeatureGroup(
         name=f"🏢 {ent['nom']}",
@@ -358,90 +673,180 @@ for ent in ENTREPRISES:
     )
 
     for imp in ent["implantations"]:
+
         popup_html = f"""
-        <b style="color:{color};">{ent['nom']}</b><br>
-        {imp.get('adresse','')}<br><br>
 
-        🏭 <b>Capacité :</b> {imp.get('capacité','')}<br>
+        <b style="color:{color};">
+            {ent['nom']}
+        </b>
 
-        👤 {imp.get('contact','')}<br>
+        <br>
 
-        📧 <a href="mailto:{imp.get('email','')}">{imp.get('email','')}</a><br>
+        {imp.get('adresse','')}
 
-        📞 {imp.get('tel','')}<br>
+        <br><br>
+
+        🏭 <b>Capacité :</b>
+        {imp.get('capacité','')}
+
+        <br>
+
+        👤 {imp.get('contact','')}
+
+        <br>
+
+        📧
+        <a href="mailto:{imp.get('email','')}">
+            {imp.get('email','')}
+        </a>
+
+        <br>
+
+        📞 {imp.get('tel','')}
+
         """
 
-        sharepoint_link = imp.get("sharepoint", "")
+        sharepoint_link = imp.get(
+            "sharepoint",
+            ""
+        )
 
-        if sharepoint_link and str(sharepoint_link).startswith("http"):
+        if (
+            sharepoint_link
+            and str(sharepoint_link).startswith("http")
+        ):
+
             popup_html += f"""
+
             <br>
-            🔗 <a href="{sharepoint_link}" target="_blank">Ouvrir Sharepoint</a>
+
+            🔗
+            <a href="{sharepoint_link}"
+               target="_blank">
+                Ouvrir Sharepoint
+            </a>
+
             """
 
         folium.Marker(
-            location=[imp["lat"], imp["lon"]],
+
+            location=[
+                imp["lat"],
+                imp["lon"]
+            ],
+
             tooltip=ent["nom"],
-            icon=folium.Icon(color=color),
-            popup=folium.Popup(popup_html, max_width=350)
+
+            icon=folium.Icon(
+                color=color
+            ),
+
+            popup=folium.Popup(
+                popup_html,
+                max_width=350
+            )
+
         ).add_to(fg)
 
     fg.add_to(m)
 
+
 # ==========================================================
 # DEPARTEMENTS PAR ENTREPRISE
 # ==========================================================
+
 for ent in ENTREPRISES:
+
     fg_dep = folium.FeatureGroup(
+
         name=f"🟦 {ent['nom']} - Départements",
+
         show=False
     )
 
     deps_ent = set()
 
     for imp in ent["implantations"]:
-        for dep in imp.get("deps", []):
-            deps_ent.add(dep.strip())
+
+        for dep in imp.get(
+            "deps",
+            []
+        ):
+
+            deps_ent.add(
+                dep.strip().zfill(2)
+            )
 
     for _, r in gdf.iterrows():
+
         code = r["code"]
 
         if code in deps_ent:
-            color = get_color(ent["statut_nego"])
+
+            color = get_color(
+                ent["statut_nego"]
+            )
 
             folium.GeoJson(
+
                 r["geometry"],
+
                 style_function=lambda x, color=color: {
+
                     "fillColor": color,
                     "color": color,
                     "weight": 2,
                     "opacity": 0.9,
                     "fillOpacity": 0.4
                 },
+
                 tooltip=f"{ent['nom']} • {code}"
+
             ).add_to(fg_dep)
 
     fg_dep.add_to(m)
 
+
 # ==========================================================
 # CONTROL LAYERS
 # ==========================================================
-folium.LayerControl(collapsed=False).add_to(m)
+
+folium.LayerControl(
+    collapsed=False
+).add_to(m)
+
 
 # ==========================================================
 # DISPLAY
 # ==========================================================
-st_folium(m, width=1400, height=800)
+
+st_folium(
+    m,
+    width=1400,
+    height=800
+)
+
 
 # ==========================================================
 # EXPORT HTML
 # ==========================================================
-m.save("carte_fournisseurs.html")
 
-with open("carte_fournisseurs.html", "rb") as f:
+m.save(
+    "carte_fournisseurs.html"
+)
+
+with open(
+    "carte_fournisseurs.html",
+    "rb"
+) as f:
+
     st.download_button(
+
         "📥 Télécharger la carte HTML",
+
         f,
+
         "carte_fournisseurs.html",
+
         "text/html"
     )
