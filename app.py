@@ -89,9 +89,7 @@ df.columns = df.columns.str.strip().str.lower()
 # GEOJSON FRANCE
 # ==========================================================
 
-url = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson"
-
-gdf = gpd.read_file(url)
+gdf = gpd.read_file("data/departements.geojson")
 
 # Sécurisation des codes départements
 gdf["code"] = gdf["code"].astype(str).str.zfill(2)
